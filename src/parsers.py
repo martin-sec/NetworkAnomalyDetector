@@ -1,6 +1,6 @@
 import pyshark
 from pyshark import FileCapture
-from pyshark import packet
+
 
 
 def load_pcap(filepath: str) -> FileCapture | None:
