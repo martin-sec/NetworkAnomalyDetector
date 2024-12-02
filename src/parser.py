@@ -9,10 +9,6 @@ import sys
 PCAP_FILE_NOT_FOUND_ERROR = 1
 FILE_IS_NOT_PCAP_ERROR = 2
 
-logging.basicConfig(filename='../logs/parser.log',
-                    level=logging.INFO,
-                    format='%(asctime)s - %(levelname)s - %(message)s')
-
 def load_pcap(filepath: str) -> FileCapture | None:
     logging.info(f"Loading PCAP file: {filepath}")
     try:
@@ -34,7 +30,7 @@ def has_network_layer(pkt: Packet) -> bool:
 def has_transport_layer(pkt: Packet) -> bool:
     return bool(pkt.transport_layer)
 
-def extract_basic_info(capture: FileCapture) -> dict[int, dict[str, str]]:
+def extract_basic_info(capture: FileCapture) -> dict[int, dict[str, str | dict[str, str]]]:
     basic_pkt_info: dict[int, dict[str, str | dict[str, str]]] = {}
     counter = 1
     logging.info(f"Extracting basic information from {capture}")
@@ -44,10 +40,7 @@ def extract_basic_info(capture: FileCapture) -> dict[int, dict[str, str]]:
         # To be reviewed in a few days
         logging.debug(f"Extracting basic information for packet #{counter}...")
         basic_pkt_info[counter] = {
-            "Timestamp": {
-                "Date": "N/A",
-                "Time": "N/A",
-            },
+            "Timestamp": "N/A",
             "Source IP": "N/A",
             "Destination IP": "N/A",
             "Transport Protocol": "N/A",
@@ -56,10 +49,8 @@ def extract_basic_info(capture: FileCapture) -> dict[int, dict[str, str]]:
             "Packet Length": "N/A"
         }
         if has_timestamp(pkt):
-            timestamp = str(pkt.sniff_time)
-            date, time = timestamp.split()
-            basic_pkt_info[counter]["Timestamp"]["Date"] = date
-            basic_pkt_info[counter]["Timestamp"]["Time"] = time
+            basic_pkt_info[counter]["Timestamp"] = str(pkt.sniff_time)
+
 
         if has_network_layer(pkt):
             basic_pkt_info[counter]["Source IP"] = str(pkt.ip.src)
@@ -74,11 +65,3 @@ def extract_basic_info(capture: FileCapture) -> dict[int, dict[str, str]]:
         counter += 1
     logging.info(f"All basic information from {capture} was successfully extracted.")
     return dict(basic_pkt_info)
-
-
-
-
-
-
-
-pprint.pprint(extract_basic_info(load_pcap("../data/raw/3-way-handshake.pcap")), sort_dicts=False)
