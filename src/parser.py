@@ -30,8 +30,8 @@ def has_network_layer(pkt: Packet) -> bool:
 def has_transport_layer(pkt: Packet) -> bool:
     return bool(pkt.transport_layer)
 
-def extract_basic_info(capture: FileCapture) -> dict[int, dict[str, str | dict[str, str]]]:
-    basic_pkt_info: dict[int, dict[str, str | dict[str, str]]] = {}
+def extract_basic_info(capture: FileCapture) -> dict[int, dict[str, str ]]:
+    basic_pkt_info: dict[int, dict[str, str]] = {}
     counter = 1
     logging.info(f"Extracting basic information from {capture}")
     for pkt in capture:
