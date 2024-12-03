@@ -1,5 +1,4 @@
 import pprint
-from pyshark.capture.capture import TSharkCrashException
 from src import parser as parser
 from src import exporter as exporter
 import logging
@@ -11,11 +10,14 @@ logging.basicConfig(filename='logs/parser.log',
 
 def main():
     try:
-        output = (parser.extract_basic_info(parser.load_pcap("data/raw/test.pcap")))
-        pprint.pprint(output, sort_dicts=False)
+        print(parser.extract_basic_info(parser.load_pcap("data/raw/200722_tcp_anon.pcapng")))
+        # pprint.pprint(output, sort_dicts=False)
+        exporter.csv_export(parser.extract_basic_info(parser.load_pcap("data/raw/200722_tcp_anon.pcapng")))
+        exporter.json_export(parser.extract_basic_info(parser.load_pcap("data/raw/200722_tcp_anon.pcapng")))
     except FileNotFoundError:
         sys.exit(10)
     except PermissionError:
+        logging.error("Error(20) - Permission Error, The user does not have enough permissions to open the file")
         sys.exit(20)
     except ValueError:
         sys.exit(30)

@@ -21,8 +21,7 @@ def load_pcap(filepath: str) -> FileCapture | None:
         raise FileNotFoundError(f"PCAP file not found: {filepath}")
     except PermissionError:
         raise PermissionError(f"PCAP file not readable: {filepath}")
-    except TSharkCrashException:
-        raise TSharkCrashException
+
 
 def has_timestamp(pkt: Packet) -> bool:
     return bool(pkt.sniff_timestamp)
