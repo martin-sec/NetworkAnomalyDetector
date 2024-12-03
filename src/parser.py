@@ -1,26 +1,56 @@
 import pyshark
 from pyshark import FileCapture
 from pyshark.packet.packet import Packet
-from pyshark.capture.capture import TSharkCrashException
+from src import error_codes as err
 import logging
-import sys
 
-PCAP_FILE_NOT_FOUND_ERROR = 1
-FILE_IS_NOT_PCAP_ERROR = 2
+# Logging
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+
+info_handler = logging.FileHandler("./logs/parser.log")
+info_handler.setLevel(logging.INFO)
+info_formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
+info_handler.setFormatter(info_formatter)
+
+error_handler = logging.FileHandler("./logs/parser_error.log")
+error_handler.setLevel(logging.ERROR)
+error_formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
+error_handler.setFormatter(error_formatter)
+
+logger.addHandler(info_handler)
+logger.addHandler(error_handler)
 
 def load_pcap(filepath: str) -> FileCapture | None:
-    logging.info(f"Loading PCAP file: {filepath}")
+    logger.info(f"Loading PCAP file: {filepath}...")
+    if not isinstance(filepath, str):
+        logger.error(f"Error({err.INVALID_FILEPATH_TYPE_ERROR}): filepath {filepath} must be a valid string.")
+        raise TypeError(f"The filepath {filepath} must be a string")
+    logger.info(f"PCAP file loaded successfully")
+
     try:
+        logger.info(f"Opening PCAP file: {filepath}...")
         with open(filepath, "rb") as file:
             data = file.read()
-            if not (data.startswith(b"\xd4\xc3\xb2\xa1") or data.startswith(b"\xa1\xb2\xc3\xd4")):
+            if not (data.startswith(b"\xd4\xc3\xb2\xa1") or
+                    data.startswith(b"\xa1\xb2\xc3\xd4") or
+                    data.startswith(b"\x0a\x0d\x0d\x0a")):
                 # Supported packet capture formats .pcapng, .pcap, .cap, and .libcap
-                raise ValueError
+                logger.error(f"Error({err.INVALID_PCAP_FILE_SIGNATURE_ERROR}): The PCAP's file signature is not supported."
+                             f" It may not be a PCAP file.")
+                raise ValueError(f"{filepath} is not a valid PCAP file")
+            logger.info("PCAP file contains a valid signature and was opened successfully")
         return pyshark.FileCapture(input_file=filepath)
+
     except FileNotFoundError:
+        logger.error(f"Error({err.PCAP_FILE_NOT_FOUND_ERROR}): the PCAP file was not found. Please, check the filepath provided.")
         raise FileNotFoundError(f"PCAP file not found: {filepath}")
+    except IsADirectoryError:
+        logger.error(f"Error({err.FILE_IS_A_DIRECTORY_ERROR}): the path is a directory, not a PCAP file.")
+        raise IsADirectoryError(f"{filepath} is a directory")
     except PermissionError:
-        raise PermissionError(f"PCAP file not readable: {filepath}")
+        logger.error(f"Error({err.PCAP_FILE_PERMISSION_ERROR}): you do not have permission to access the PCAP.")
+        raise PermissionError(f"PCAP file not readable due to lack of permission: {filepath}")
 
 
 def has_timestamp(pkt: Packet) -> bool:

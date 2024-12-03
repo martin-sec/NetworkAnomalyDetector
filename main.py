@@ -1,26 +1,26 @@
 import pprint
 from src import parser as parser
 from src import exporter as exporter
+from src import error_codes as err
 import logging
 import sys
 
-logging.basicConfig(filename='logs/parser.log',
-                    level=logging.INFO,
-                    format='%(asctime)s - %(levelname)s - %(message)s')
 
 def main():
     try:
-        print(parser.extract_basic_info(parser.load_pcap("data/raw/200722_tcp_anon.pcapng")))
+        output = parser.extract_basic_info(parser.load_pcap("data/raw/"))
+        pprint.pprint(output)
         # pprint.pprint(output, sort_dicts=False)
-        exporter.csv_export(parser.extract_basic_info(parser.load_pcap("data/raw/200722_tcp_anon.pcapng")))
-        exporter.json_export(parser.extract_basic_info(parser.load_pcap("data/raw/200722_tcp_anon.pcapng")))
     except FileNotFoundError:
-        sys.exit(10)
+        sys.exit(err.PCAP_FILE_NOT_FOUND_ERROR)
     except PermissionError:
-        logging.error("Error(20) - Permission Error, The user does not have enough permissions to open the file")
-        sys.exit(20)
+        sys.exit(err.PCAP_FILE_PERMISSION_ERROR)
     except ValueError:
-        sys.exit(30)
+        sys.exit(err.INVALID_PCAP_FILE_SIGNATURE_ERROR)
+    except IsADirectoryError:
+        sys.exit(err.FILE_IS_A_DIRECTORY_ERROR)
+    except TypeError:
+        sys.exit(err.INVALID_FILEPATH_TYPE_ERROR)
 
 if __name__ == "__main__":
     main()
