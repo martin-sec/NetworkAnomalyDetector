@@ -2,7 +2,6 @@ import pyshark
 from pyshark import FileCapture
 from pyshark.packet.packet import Packet
 from pyshark.capture.capture import TSharkCrashException
-import pprint
 import logging
 import sys
 
@@ -12,14 +11,18 @@ FILE_IS_NOT_PCAP_ERROR = 2
 def load_pcap(filepath: str) -> FileCapture | None:
     logging.info(f"Loading PCAP file: {filepath}")
     try:
-        capture = pyshark.FileCapture(input_file=filepath)
-        logging.info(f"PCAP file '{filepath}' loaded successfully.")
-        return capture
+        with open(filepath, "rb") as file:
+            data = file.read()
+            if not (data.startswith(b"\xd4\xc3\xb2\xa1") or data.startswith(b"\xa1\xb2\xc3\xd4")):
+                # Supported packet capture formats .pcapng, .pcap, .cap, and .libcap
+                raise ValueError
+        return pyshark.FileCapture(input_file=filepath)
     except FileNotFoundError:
-        # Catches instances of the filepath given not being found
-        logging.error(f"Error({PCAP_FILE_NOT_FOUND_ERROR}): PCAP file '{filepath}' could not be found or is not a PCAP file.")
-        sys.exit(PCAP_FILE_NOT_FOUND_ERROR)
-
+        raise FileNotFoundError(f"PCAP file not found: {filepath}")
+    except PermissionError:
+        raise PermissionError(f"PCAP file not readable: {filepath}")
+    except TSharkCrashException:
+        raise TSharkCrashException
 
 def has_timestamp(pkt: Packet) -> bool:
     return bool(pkt.sniff_timestamp)
