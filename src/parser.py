@@ -83,7 +83,6 @@ def extract_basic_info(capture: FileCapture) -> dict[int, dict[str, str ]]:
         if has_timestamp(pkt):
             basic_pkt_info[counter]["Timestamp"] = str(pkt.sniff_time)
 
-
         if has_network_layer(pkt):
             basic_pkt_info[counter]["Source IP"] = str(pkt.ip.src)
             basic_pkt_info[counter]["Destination IP"] = str(pkt.ip.dst)
